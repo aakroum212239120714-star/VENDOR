@@ -5,3 +5,6 @@ export const loginApi = (data) =>
 
 export const registerApi = (data) =>
   api.post('/auth/register', data);
+
+export const fetchMe = () =>
+  api.get('/auth/me', { skipAuthRedirect: true });

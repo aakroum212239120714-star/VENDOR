@@ -1,13 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLang } from '../contexts/LangContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { loginApi } from '../api/auth';
+import AuthSessionBanner from '../components/AuthSessionBanner';
+import Spinner from '../components/ui/Spinner';
 
 export default function LoginPage() {
   const { t, lang, toggleLang, dir } = useLang();
-  const { login, isAuthenticated } = useAuth();
+  const { login, authReady } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
 
@@ -18,11 +20,9 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [isAuthenticated, navigate]);
+  if (!authReady) {
+    return <Spinner center brand />;
+  }
 
   const handleChange = (key) => (e) => {
     setForm(prev => ({ ...prev, [key]: e.target.value }));
@@ -151,6 +151,8 @@ export default function LoginPage() {
           }}>
             {t('auth', 'login_sub')}
           </p>
+
+          <AuthSessionBanner />
 
           <form onSubmit={handleSubmit}>
             <div className="input-group" style={{ marginBottom: 16 }}>
