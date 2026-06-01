@@ -13,6 +13,7 @@ import ProductsPage from "./pages/ProductsPage";
 import OrdersPage from "./pages/OrdersPage";
 import StoreSettingsPage from "./pages/StoreSettingsPage";
 import PublicStorePage from "./pages/PublicStorePage";
+import WhatsappAIPage from "./pages/WhatsappAIPage";
 
 export default function App() {
   return (
@@ -41,6 +42,7 @@ export default function App() {
                 <Route path="/products" element={<ProductsPage />} />
                 <Route path="/orders" element={<OrdersPage />} />
                 <Route path="/store" element={<StoreSettingsPage />} />
+                <Route path="/whatsapp-ai" element={<WhatsappAIPage />} />
               </Route>
 
               {/* Catch-all */}

@@ -99,8 +99,27 @@ export default function DashboardPage() {
     <div className="page-content">
 
       {/* Page header */}
-      <div className="page-header">
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 className="page-title">{t('dashboard', 'title')}</h1>
+        <button 
+          onClick={() => window.location.href = '/whatsapp-ai'}
+          style={{
+            background: 'var(--brand)',
+            color: 'var(--brand-text)',
+            padding: '10px 20px',
+            borderRadius: '999px',
+            fontWeight: 700,
+            fontSize: '0.9rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            cursor: 'pointer',
+            border: 'none',
+            boxShadow: 'rgba(14,15,12,0.12) 0px 0px 0px 1px'
+          }}
+        >
+          <span>🤖</span> Activate WhatsApp AI
+        </button>
       </div>
 
       {/* ── Stat cards ──────────────────────────────────────── */}
