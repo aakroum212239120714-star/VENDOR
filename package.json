@@ -13,8 +13,6 @@
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
-  },
-  "dependencies": {
-    "@whiskeysockets/baileys": "^6.7.16"
   }
+  
 }
