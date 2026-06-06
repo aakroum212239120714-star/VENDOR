@@ -20,17 +20,16 @@ const generateSlug = (name, user_id) => {
 
 // ─────────────────────────────────────────
 // Helper: resolve uploaded file path
-// Works with both upload.fields (req.files)
-// and upload.single (req.file) for compat.
+// Works with Cloudinary storage
 // ─────────────────────────────────────────
 const resolveFile = (req, fieldName) => {
   // upload.fields → req.files is an object keyed by field name
   if (req.files && req.files[fieldName] && req.files[fieldName][0]) {
-    return `/uploads/${req.files[fieldName][0].filename}`;
+    return req.files[fieldName][0].path; // ✅ رابط Cloudinary
   }
   // upload.single fallback (logo only)
   if (fieldName === "logo" && req.file) {
-    return `/uploads/${req.file.filename}`;
+    return req.file.path; // ✅ رابط Cloudinary
   }
   return null;
 };
@@ -182,7 +181,7 @@ const updateMyStore = async (req, res) => {
 
     const store = results[0];
 
-    // 2. Merge old values with new — only override when a new value was provided
+    // 2. Merge old values with new
     const updatedName = name || store.name;
     const updatedSlug =
       slug !== undefined && slug !== ""
