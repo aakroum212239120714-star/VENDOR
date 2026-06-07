@@ -23,13 +23,11 @@ const generateSlug = (name, user_id) => {
 // Works with Cloudinary storage
 // ─────────────────────────────────────────
 const resolveFile = (req, fieldName) => {
-  // upload.fields → req.files is an object keyed by field name
   if (req.files && req.files[fieldName] && req.files[fieldName][0]) {
-    return req.files[fieldName][0].path; // ✅ رابط Cloudinary
+    return req.files[fieldName][0].secure_url; // ✅ Cloudinary
   }
-  // upload.single fallback (logo only)
   if (fieldName === "logo" && req.file) {
-    return req.file.path; // ✅ رابط Cloudinary
+    return req.file.secure_url; // ✅ Cloudinary
   }
   return null;
 };
@@ -47,12 +45,10 @@ const createStore = async (req, res) => {
   const logo = resolveFile(req, "logo");
 
   try {
-    // 1. Validate
     if (!name) {
       return res.status(400).json({ message: "اسم المتجر مطلوب" });
     }
 
-    // 2. Check if user already has a store
     const [existing] = await pool.query(
       "SELECT id FROM stores WHERE user_id = ?",
       [user_id],
@@ -62,15 +58,12 @@ const createStore = async (req, res) => {
       return res.status(400).json({ message: "لديك متجر بالفعل" });
     }
 
-    // 3. Auto-generate slug
     const slug = generateSlug(name, user_id);
 
-    // 4. Apply defaults for theme fields
     const finalPrimaryColor = primary_color || "#9fe870";
     const finalCardBg = card_bg || "#ffffff";
     const finalPageBg = page_bg || "#f9faf8";
 
-    // 5. INSERT
     let result;
     try {
       [result] = await pool.query(
@@ -91,7 +84,6 @@ const createStore = async (req, res) => {
     } catch (err) {
       if (!isUnknownColumnError(err)) throw err;
 
-      // Backward compatible fallback for older schemas
       [result] = await pool.query(
         "INSERT INTO stores (user_id, name, slug, description, logo) VALUES (?, ?, ?, ?, ?)",
         [user_id, name, slug, description || null, logo],
@@ -169,7 +161,6 @@ const updateMyStore = async (req, res) => {
   const newBanner = resolveFile(req, "banner");
 
   try {
-    // 1. Find current store
     const [results] = await pool.query(
       "SELECT * FROM stores WHERE user_id = ?",
       [user_id],
@@ -181,7 +172,6 @@ const updateMyStore = async (req, res) => {
 
     const store = results[0];
 
-    // 2. Merge old values with new
     const updatedName = name || store.name;
     const updatedSlug =
       slug !== undefined && slug !== ""
@@ -204,7 +194,6 @@ const updateMyStore = async (req, res) => {
     const updatedBannerSubtitle =
       banner_subtitle !== undefined ? banner_subtitle : store.banner_subtitle;
 
-    // 3. UPDATE
     try {
       await pool.query(
         `UPDATE stores SET
@@ -231,7 +220,6 @@ const updateMyStore = async (req, res) => {
     } catch (err) {
       if (!isUnknownColumnError(err)) throw err;
 
-      // Backward compatible fallback for older schemas
       await pool.query(
         "UPDATE stores SET name=?, slug=?, description=?, logo=? WHERE user_id=?",
         [updatedName, updatedSlug, updatedDesc, updatedLogo, user_id],

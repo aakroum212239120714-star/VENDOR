@@ -7,14 +7,13 @@ const isUnknownColumnError = (err) =>
 const createProduct = async (req, res) => {
   const user_id = req.user.id;
   const { name, description, price, stock, category, is_active } = req.body;
-  const image = req.file ? `/uploads/${req.file.filename}` : null;
+  const image = req.file ? req.file.secure_url : null; // ✅ Cloudinary
 
   if (!name || !price) {
     return res.status(400).json({ message: "اسم المنتج والسعر مطلوبان" });
   }
 
   try {
-    // تحقق أن البائع لديه متجر
     const [stores] = await pool.query(
       "SELECT id FROM stores WHERE user_id = ?",
       [user_id],
@@ -43,7 +42,6 @@ const createProduct = async (req, res) => {
     } catch (err) {
       if (!isUnknownColumnError(err)) throw err;
 
-      // Backward-compatible fallback for older schemas
       [result] = await pool.query(
         "INSERT INTO products (store_id, name, description, price, stock, image) VALUES (?, ?, ?, ?, ?, ?)",
         [store_id, name, description || null, price, stock || 0, image],
@@ -100,10 +98,9 @@ const updateProduct = async (req, res) => {
   const user_id = req.user.id;
   const { id } = req.params;
   const { name, description, price, stock, category, is_active } = req.body;
-  const image = req.file ? `/uploads/${req.file.filename}` : null;
+  const image = req.file ? req.file.secure_url : null; // ✅ Cloudinary
 
   try {
-    // تحقق أن المنتج يخص هذا البائع
     const [products] = await pool.query(
       `SELECT p.* FROM products p
        JOIN stores s ON p.store_id = s.id
@@ -143,17 +140,9 @@ const updateProduct = async (req, res) => {
     } catch (err) {
       if (!isUnknownColumnError(err)) throw err;
 
-      // Backward-compatible fallback for older schemas
       await pool.query(
         "UPDATE products SET name=?, description=?, price=?, stock=?, image=? WHERE id=?",
-        [
-          updatedName,
-          updatedDesc,
-          updatedPrice,
-          updatedStock,
-          updatedImage,
-          id,
-        ],
+        [updatedName, updatedDesc, updatedPrice, updatedStock, updatedImage, id],
       );
     }
 
