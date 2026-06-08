@@ -24,10 +24,10 @@ const generateSlug = (name, user_id) => {
 // ─────────────────────────────────────────
 const resolveFile = (req, fieldName) => {
   if (req.files && req.files[fieldName] && req.files[fieldName][0]) {
-    return req.files[fieldName][0].secure_url; // ✅ Cloudinary
+    return req.files[fieldName][0].path; // ✅ Cloudinary
   }
   if (fieldName === "logo" && req.file) {
-    return req.file.secure_url; // ✅ Cloudinary
+    return req.file.path; // ✅ Cloudinary
   }
   return null;
 };
