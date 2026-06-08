@@ -8,7 +8,8 @@ const createProduct = async (req, res) => {
   const user_id = req.user.id;
   const { name, description, price, stock, category, is_active } = req.body;
   const image = req.file ? req.file.secure_url : null; // ✅ Cloudinary
-
+console.log('req.file:', req.file);
+  console.log('image URL:', image);
   if (!name || !price) {
     return res.status(400).json({ message: "اسم المنتج والسعر مطلوبان" });
   }
