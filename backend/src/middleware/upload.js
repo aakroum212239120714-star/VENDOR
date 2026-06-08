@@ -11,6 +11,14 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+
+// ✅ مؤقت للتشخيص
+console.log('Cloudinary:', {
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '❌ مفقود',
+  api_key:    process.env.CLOUDINARY_API_KEY    ? '✅ موجود' : '❌ مفقود',
+  api_secret: process.env.CLOUDINARY_API_SECRET ? '✅ موجود' : '❌ مفقود',
+});
+
 // ─────────────────────────────────────────
 // WHERE to save + WHAT name to give
 // ─────────────────────────────────────────
