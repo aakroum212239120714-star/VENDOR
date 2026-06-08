@@ -50,4 +50,31 @@ module.exports = multer({
   storage,
   fileFilter,
   limits: { fileSize: 2 * 1024 * 1024 }, // 2MB max
-});
+});// ✅ أضف هذا Wrapper للتشخيص
+const uploadWithLog = {
+  single: (field) => (req, res, next) => {
+    upload.single(field)(req, res, (err) => {
+      if (err) {
+        console.error('Upload error:', err);
+        return next(err);
+      }
+      console.log('req.file keys:', req.file ? Object.keys(req.file) : 'NO FILE');
+      console.log('req.file:', req.file);
+      next();
+    });
+  },
+  fields: (fields) => (req, res, next) => {
+    upload.fields(fields)(req, res, (err) => {
+      if (err) {
+        console.error('Upload error:', err);
+        return next(err);
+      }
+      console.log('req.files keys:', req.files ? Object.keys(req.files) : 'NO FILES');
+      console.log('req.files:', JSON.stringify(req.files));
+      next();
+    });
+  },
+};
+
+module.exports = uploadWithLog;
+
