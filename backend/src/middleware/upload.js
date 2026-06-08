@@ -1,27 +1,19 @@
+const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const multer = require('multer');
 
-// ─────────────────────────────────────────
-// CLOUDINARY CONFIG
-// ─────────────────────────────────────────
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key:    process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-
-// ✅ مؤقت للتشخيص
 console.log('Cloudinary:', {
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '❌ مفقود',
   api_key:    process.env.CLOUDINARY_API_KEY    ? '✅ موجود' : '❌ مفقود',
   api_secret: process.env.CLOUDINARY_API_SECRET ? '✅ موجود' : '❌ مفقود',
 });
 
-// ─────────────────────────────────────────
-// WHERE to save + WHAT name to give
-// ─────────────────────────────────────────
 const storage = new CloudinaryStorage({
   cloudinary,
   params: {
@@ -31,9 +23,6 @@ const storage = new CloudinaryStorage({
   },
 });
 
-// ─────────────────────────────────────────
-// FILTER: images only
-// ─────────────────────────────────────────
 const fileFilter = (req, file, cb) => {
   const allowed = ['image/jpeg', 'image/png', 'image/webp'];
   if (allowed.includes(file.mimetype)) {
@@ -43,14 +32,14 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// ─────────────────────────────────────────
-// EXPORT
-// ─────────────────────────────────────────
-module.exports = multer({
+// ✅ عرّف upload أولاً
+const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB max
-});// ✅ أضف هذا Wrapper للتشخيص
+  limits: { fileSize: 2 * 1024 * 1024 },
+});
+
+// ✅ ثم استخدمه في uploadWithLog
 const uploadWithLog = {
   single: (field) => (req, res, next) => {
     upload.single(field)(req, res, (err) => {
@@ -59,7 +48,7 @@ const uploadWithLog = {
         return next(err);
       }
       console.log('req.file keys:', req.file ? Object.keys(req.file) : 'NO FILE');
-      console.log('req.file:', req.file);
+      console.log('req.file:', JSON.stringify(req.file));
       next();
     });
   },
@@ -77,4 +66,3 @@ const uploadWithLog = {
 };
 
 module.exports = uploadWithLog;
-
