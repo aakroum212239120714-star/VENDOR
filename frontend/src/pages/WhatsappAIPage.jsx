@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import api from '../api/axios';
+
 
 export default function WhatsappAIPage() {
   const { token: authToken } = useAuth();
@@ -15,10 +17,8 @@ export default function WhatsappAIPage() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res  = await fetch('/api/whatsapp/settings', {
-          headers: { Authorization: `Bearer ${authToken}` }
-        });
-        const data = await res.json();
+        const res  = await api.get('/whatsapp/settings');
+        const data = res.data;
         setPhoneId(data.wa_phone_id || '');
         setHasToken(data.has_token);
       } catch (err) {
@@ -28,7 +28,7 @@ export default function WhatsappAIPage() {
       }
     };
     fetchSettings();
-  }, [authToken]);
+  }, []);
 
   const handleSave = async () => {
     if (!phoneId) {
@@ -44,15 +44,7 @@ export default function WhatsappAIPage() {
       const body = { wa_phone_id: phoneId };
       if (waToken) body.wa_token = waToken;
 
-      const res = await fetch('/api/whatsapp/settings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${authToken}`
-        },
-        body: JSON.stringify(body)
-      });
-      if (!res.ok) throw new Error();
+      await api.post('/whatsapp/settings', body);
       setHasToken(true);
       setWaToken('');
       addToast('تم حفظ الإعدادات بنجاح ✓', 'success');
