@@ -4,7 +4,7 @@ require("dotenv").config();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const getModel = () => genAI.getGenerativeModel({
-  model: "gemini-1.5-flash",
+  model: "gemini-2.0-flash", // ✅ النموذج الجديد
   generationConfig: {
     responseMimeType: "application/json",
     responseSchema: {
@@ -49,7 +49,10 @@ async function generateAIResponse(customerMessage, conversationHistory, catalog)
       ? catalog.map(p => `ID: ${p.id} | ${p.name} | ${p.price} دج | المخزون: ${p.stock}`).join('\n')
       : "لا توجد منتجات متاحة حالياً.";
 
-    const history = conversationHistory.map(msg => ({
+    // ✅ تأكد أن conversationHistory هو Array
+    const safeHistory = Array.isArray(conversationHistory) ? conversationHistory : [];
+
+    const history = safeHistory.map(msg => ({
       role: msg.role === 'model' ? 'model' : 'user',
       parts: [{ text: msg.content }]
     }));

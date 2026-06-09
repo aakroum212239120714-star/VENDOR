@@ -1,4 +1,3 @@
-
 const pool  = require("../config/db");
 const { generateAIResponse } = require("./geminiService");
 
@@ -32,7 +31,17 @@ const getHistory = async (phone, store_id) => {
     "SELECT context_json FROM conversation_history WHERE phone_number = ? AND store_id = ?",
     [phone, store_id]
   );
-  return rows.length > 0 ? rows[0].context_json : [];
+
+  if (rows.length === 0) return [];
+
+  try {
+    // ✅ إذا كان string حوّله لـ Array
+    const raw = rows[0].context_json;
+    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
 };
 
 const saveHistory = async (phone, store_id, history) => {
@@ -83,9 +92,11 @@ const handleIncomingMessage = async (store, customerPhone, text) => {
 
     const aiResponse = await generateAIResponse(text, history, products);
 
-    history.push({ role: "user",  content: text });
-    history.push({ role: "model", content: aiResponse.reply_message });
-    await saveHistory(customerPhone, store_id, history);
+    // ✅ تأكد أن history هو Array قبل push
+    const updatedHistory = Array.isArray(history) ? history : [];
+    updatedHistory.push({ role: "user",  content: text });
+    updatedHistory.push({ role: "model", content: aiResponse.reply_message });
+    await saveHistory(customerPhone, store_id, updatedHistory);
 
     await sendMessage(
       store.wa_token,
