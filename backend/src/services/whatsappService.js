@@ -1,5 +1,6 @@
 const pool  = require("../config/db");
-const { generateAIResponse } = require("./geminiService");
+// ملاحظة: يمكنك تغيير اسم الملف إلى groqService إذا قمت بتغييره في مشروعك
+const { generateAIResponse } = require("./geminiService"); 
 
 const sendMessage = async (wa_token, wa_phone_id, to, text) => {
   const res = await fetch(
@@ -90,12 +91,15 @@ const handleIncomingMessage = async (store, customerPhone, text) => {
 
     const history = await getHistory(customerPhone, store_id);
 
+    // إرسال الطلب إلى Groq
     const aiResponse = await generateAIResponse(text, history, products);
 
     // ✅ تأكد أن history هو Array قبل push
     const updatedHistory = Array.isArray(history) ? history : [];
-    updatedHistory.push({ role: "user",  content: text });
-    updatedHistory.push({ role: "model", content: aiResponse.reply_message });
+    updatedHistory.push({ role: "user",      content: text });
+    // تم التغيير هنا من model إلى assistant ليتوافق مع Groq
+    updatedHistory.push({ role: "assistant", content: aiResponse.reply_message }); 
+    
     await saveHistory(customerPhone, store_id, updatedHistory);
 
     await sendMessage(
@@ -105,6 +109,7 @@ const handleIncomingMessage = async (store, customerPhone, text) => {
       aiResponse.reply_message
     );
 
+    // إذا تم تأكيد الطلب، نقوم بإنشائه ومسح المحادثة
     if (aiResponse.is_ready_to_order && aiResponse.order_details) {
       await createOrder(store_id, customerPhone, aiResponse.order_details);
       await pool.query(
@@ -119,7 +124,7 @@ const handleIncomingMessage = async (store, customerPhone, text) => {
       store.wa_token,
       store.wa_phone_id,
       customerPhone,
-      "عذرا، كاين مشكل صغير. راني نولي ليك من بعد 🛠️"
+      "عذرا، كاين ضغط على النظام حاليا. راني نولي ليك من بعد شوية 🛠️"
     ).catch(console.error);
   }
 };
