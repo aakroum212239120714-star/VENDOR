@@ -59,7 +59,7 @@ const createOrder = async (store_id, customerPhone, orderDetails) => {
   const { customer_name, wilaya, phone, items } = orderDetails;
 
   const [result] = await pool.query(
-    `INSERT INTO orders (store_id, customer_name, customer_phone, customer_wilaya, status)
+    `INSERT INTO orders (store_id, customer_name, customer_phone, customer_address, status)
      VALUES (?, ?, ?, ?, 'pending')`,
     [store_id, customer_name, phone || customerPhone, wilaya]
   );
