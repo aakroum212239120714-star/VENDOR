@@ -1,4 +1,4 @@
-const pool  = require("../config/db");
+const pool = require("../config/db");
 // ملاحظة: يمكنك تغيير اسم الملف إلى groqService إذا قمت بتغييره في مشروعك
 const { generateAIResponse } = require("./geminiService"); 
 
@@ -58,6 +58,7 @@ const saveHistory = async (phone, store_id, history) => {
 const createOrder = async (store_id, customerPhone, orderDetails) => {
   const { customer_name, wilaya, phone, items } = orderDetails;
 
+  // 1. إدخال بيانات الطلب الأساسية في جدول orders
   const [result] = await pool.query(
     `INSERT INTO orders (store_id, customer_name, customer_phone, customer_address, status)
      VALUES (?, ?, ?, ?, 'pending')`,
@@ -65,11 +66,22 @@ const createOrder = async (store_id, customerPhone, orderDetails) => {
   );
   const order_id = result.insertId;
 
+  // 2. إدخال المنتجات المشتراة داخل جدول order_items وحساب السعر تلقائياً
   for (const item of items) {
-    await pool.query(
-      `INSERT INTO order_items (order_id, product_id, quantity) VALUES (?, ?, ?)`,
-      [order_id, item.product_id, item.quantity]
+    // 🔍 جلب سعر المنتج الحالي من قاعدة البيانات لتفادي خطأ الحقل الإجباري
+    const [productRows] = await pool.query(
+      `SELECT price FROM products WHERE id = ? AND store_id = ?`,
+      [item.product_id, store_id]
     );
+    const currentPrice = productRows.length > 0 ? productRows[0].price : 0.00;
+
+    // 🚀 إدخال المنتج مع سعره الحقيقي في جدول order_items
+    await pool.query(
+      `INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)`,
+      [order_id, item.product_id, item.quantity, currentPrice]
+    );
+
+    // 📉 تحديث المخزون (ينقص حسب الكمية المطلوبة)
     await pool.query(
       `UPDATE products SET stock = stock - ? WHERE id = ? AND store_id = ?`,
       [item.quantity, item.product_id, store_id]
@@ -91,13 +103,13 @@ const handleIncomingMessage = async (store, customerPhone, text) => {
 
     const history = await getHistory(customerPhone, store_id);
 
-    // إرسال الطلب إلى Groq
+    // إرسال الطلب إلى الذكاء الاصطناعي
     const aiResponse = await generateAIResponse(text, history, products);
 
     // ✅ تأكد أن history هو Array قبل push
     const updatedHistory = Array.isArray(history) ? history : [];
-    updatedHistory.push({ role: "user",      content: text });
-    // تم التغيير هنا من model إلى assistant ليتوافق مع Groq
+    updatedHistory.push({ role: "user",       content: text });
+    // تم التغيير هنا من model إلى assistant ليتوافق مع الأنظمة المختلفة مثل Groq
     updatedHistory.push({ role: "assistant", content: aiResponse.reply_message }); 
     
     await saveHistory(customerPhone, store_id, updatedHistory);
@@ -109,7 +121,7 @@ const handleIncomingMessage = async (store, customerPhone, text) => {
       aiResponse.reply_message
     );
 
-    // إذا تم تأكيد الطلب، نقوم بإنشائه ومسح المحادثة
+    // إذا تم تأكيد الطلب، نقوم بإنشائه ومسح محادثة العميل المؤقتة
     if (aiResponse.is_ready_to_order && aiResponse.order_details) {
       await createOrder(store_id, customerPhone, aiResponse.order_details);
       await pool.query(
